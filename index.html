@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Klausurtrainer LF 7B</title>
+<style>
+:root{--bg:#f4f6fb;--card:#fff;--text:#1f2937;--muted:#6b7280;--accent:#4f46e5;--ok:#16a34a;--bad:#dc2626;--line:#e5e7eb}
+@media (prefers-color-scheme:dark){:root{--bg:#0f172a;--card:#1e293b;--text:#e5e7eb;--muted:#94a3b8;--accent:#818cf8;--line:#334155}}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.5}
+.wrap{max-width:760px;margin:0 auto;padding:16px}
+h1{font-size:1.5rem;margin:8px 0 4px}
+h2{font-size:1.15rem;margin:24px 0 8px}
+p.sub{color:var(--muted);margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+button{font:inherit;cursor:pointer}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;text-align:left;color:var(--text)}
+.tile:hover{border-color:var(--accent)}
+.tile b{display:block}
+.tile small{color:var(--muted)}
+.btn{background:var(--accent);color:#fff;border:0;border-radius:10px;padding:10px 16px}
+.btn.sec{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+.opt{display:block;width:100%;text-align:left;background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:12px;margin:8px 0}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt.ok{border-color:var(--ok);background:rgba(22,163,74,.15)}
+.opt.bad{border-color:var(--bad);background:rgba(220,38,38,.15)}
+.bar{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin:8px 0 16px}
+.bar i{display:block;height:100%;background:var(--accent);transition:width .2s}
+.tag{display:inline-block;font-size:.75rem;background:var(--line);color:var(--muted);border-radius:99px;padding:2px 10px;margin-bottom:8px}
+textarea{width:100%;min-height:110px;font:inherit;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--text)}
+.expl{margin-top:10px;padding:10px 12px;border-left:4px solid var(--accent);background:rgba(79,70,229,.08);border-radius:6px;white-space:pre-line}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.big{font-size:2.4rem;font-weight:700}
+.note{font-size:.85rem;color:var(--muted);margin-top:24px}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<script>
+/* ===== FRAGEN ===== 
+   Aufbau: je Thema (entspricht Checklisten-Punkt 1-12) 4 Multiple-Choice-Fragen (a = Index der richtigen Antwort) + 1 offene Frage.
+   Einfach hier weitere Fragen ergänzen. */
+const T=[
+{n:1,t:"Prävention & Gesundheitsförderung",
+mc:[
+{q:"Eine Schutzimpfung bei einem gesunden Menschen ist ein Beispiel für …",o:["Primärprävention","Sekundärprävention","Tertiärprävention","Rehabilitation"],a:0,e:"Primärprävention verhindert das Entstehen einer Krankheit bei (noch) Gesunden."},
+{q:"Der Blutzucker-Check bei einer Person mit hohem Diabetesrisiko dient der …",o:["Primärprävention","Sekundärprävention (Früherkennung)","Tertiärprävention","Verhältnisprävention"],a:1,e:"Sekundärprävention = Früherkennung, damit eine Krankheit früh behandelt werden kann."},
+{q:"Was ist das Ziel der Tertiärprävention?",o:["Krankheiten verhindern","Krankheiten früh erkennen","Verschlimmerung und Folgeschäden einer bestehenden Erkrankung vermeiden","Gesundheitsbewusstsein steigern"],a:2,e:"Tertiärprävention greift bei bereits bestehender Erkrankung, z. B. Fußkontrolle bei Diabetes zur Vermeidung von Amputationen."},
+{q:"Welches Beispiel ist Verhältnisprävention?",o:["Teilnahme an einem Sturzpräventionskurs","Beratung zur gesunden Ernährung","Gespräch über Rauchverzicht","Wohnraumanpassung: Haltegriffe, Stolperfallen entfernen"],a:3,e:"Verhältnisprävention verändert die Lebensumwelt, Verhaltensprävention das Verhalten der Person."}],
+open:{q:"Erklären Sie den Unterschied zwischen Pathogenese und Salutogenese und nennen Sie je ein Beispiel für Primär-, Sekundär- und Tertiärprävention in der häuslichen Pflege.",m:"• Pathogenese: Frage 'Was macht krank?' (Risikofaktoren, Krankheitsentstehung).\n• Salutogenese (Antonovsky): Frage 'Was erhält gesund?' – Kohärenzgefühl (Verstehbarkeit, Handhabbarkeit, Bedeutsamkeit), Ressourcen stärken.\n• Primär: Sturzprophylaxe, Impfberatung, Bewegungsförderung.\n• Sekundär: Früherkennung, z. B. Blutzuckerkontrolle, Hautinspektion, Screening (Dekubitus-/Sturzrisiko).\n• Tertiär: Folgeschäden vermeiden, z. B. Fußpflege/-kontrolle bei Diabetes, Wundversorgung, Rehabilitation."}},
+
+{n:2,t:"Leistungen SGB XI (Pflegeversicherung)",
+mc:[
+{q:"Wie viele Pflegegrade gibt es?",o:["3","4","5","6"],a:2,e:"Pflegegrad 1 bis 5 (seit 2017, Neues Begutachtungsassessment NBA)."},
+{q:"Wer begutachtet gesetzlich Versicherte zur Feststellung des Pflegegrades?",o:["Der Hausarzt","Der Medizinische Dienst (MD)","Der Pflegedienst","Das Sozialamt"],a:1,e:"Der MD begutachtet Kassenversicherte, bei Privatversicherten MEDICPROOF."},
+{q:"Welches Modul des Begutachtungsassessments hat die höchste Gewichtung?",o:["Mobilität","Selbstversorgung","Gestaltung des Alltagslebens","Verhaltensweisen und psychische Problemlagen"],a:1,e:"Selbstversorgung 40 %, Bewältigung krankheitsbedingter Anforderungen 20 %, Mobilität 10 %, Kognition/Kommunikation bzw. Verhalten (höherer Wert) 15 %, Alltagsleben 15 %."},
+{q:"Wie oft ist der Beratungseinsatz nach § 37 Abs. 3 SGB XI bei Pflegegeldbezug in Pflegegrad 2 und 3 verpflichtend?",o:["Halbjährlich","Vierteljährlich","Monatlich","Jährlich"],a:0,e:"PG 2 und 3: halbjährlich; PG 4 und 5: vierteljährlich; PG 1 freiwillig."}],
+open:{q:"Welche Leistungen der Pflegeversicherung (SGB XI) können bei häuslicher Pflege in Anspruch genommen werden? Nennen Sie mindestens 6.",m:"• Pflegegeld (selbst organisierte Pflege, z. B. durch Angehörige)\n• Pflegesachleistung (ambulanter Pflegedienst)\n• Kombinationsleistung (anteilig Geld + Sachleistung)\n• Entlastungsbetrag (Alltagsunterstützung, Betreuung)\n• Verhinderungspflege / Kurzzeitpflege\n• Tages- und Nachtpflege\n• Pflegehilfsmittel (Verbrauchsprodukte, z. B. Handschuhe) und technische Hilfsmittel\n• Wohnumfeldverbessernde Maßnahmen (z. B. Badumbau)\n• Pflegekurse für Angehörige, Pflegeberatung, Beratungseinsätze\n• Soziale Absicherung der Pflegepersonen (Rente, Unfallversicherung)"}},
+
+{n:3,t:"Leistungen SGB V (Krankenversicherung)",
+mc:[
+{q:"Wer trägt die Kosten für Behandlungspflege (z. B. Insulininjektion, Verbandwechsel) in der häuslichen Pflege?",o:["Die Pflegekasse (SGB XI)","Die Krankenkasse (SGB V)","Das Sozialamt","Der Patient immer selbst"],a:1,e:"Behandlungspflege ist Leistung der häuslichen Krankenpflege nach § 37 SGB V."},
+{q:"Welche Maßnahme ist Behandlungspflege?",o:["Ganzkörperwäsche","Hilfe beim Essen","Blutzuckermessung und Insulininjektion nach ärztlicher Anordnung","Wäsche waschen"],a:2,e:"Behandlungspflege = ärztlich verordnete medizinische Maßnahmen."},
+{q:"Was ist Voraussetzung für die Abrechnung häuslicher Krankenpflege?",o:["Nur Antrag des Patienten","Mündliche Absprache mit dem Pflegedienst","Pflegegrad 3","Ärztliche Verordnung und Genehmigung durch die Krankenkasse"],a:3,e:"Der Arzt verordnet, die Krankenkasse genehmigt."},
+{q:"Häusliche Krankenpflege ist geregelt in …",o:["§ 37 SGB V","§ 36 SGB XI","§ 1 SGB I","§ 14 SGB XI"],a:0,e:"§ 37 SGB V = häusliche Krankenpflege (Behandlungssicherungs- und Krankenhausvermeidungspflege)."}],
+open:{q:"Frau M. (Diabetes mellitus Typ 2, Pflegegrad 2) braucht Hilfe bei der Ganzkörperwäsche, bekommt Insulin gespritzt und hat einen Verbandwechsel am Unterschenkel. Ordnen Sie die Leistungen dem SGB V bzw. SGB XI zu.",m:"• Ganzkörperwäsche = Grundpflege → SGB XI (Pflegeversicherung, Pflegesachleistung/-geld).\n• Insulininjektion (und BZ-Messung) = Behandlungspflege → SGB V, ärztliche Verordnung nötig.\n• Verbandwechsel = Behandlungspflege → SGB V.\n• Beide Leistungen können vom selben Pflegedienst erbracht werden, werden aber getrennt abgerechnet."}},
+
+{n:4,t:"Krankheitslehre Diabetes mellitus Typ 2",
+mc:[
+{q:"Was ist die Hauptursache beim Diabetes mellitus Typ 2?",o:["Autoimmunzerstörung der Beta-Zellen","Insulinresistenz mit (zunächst) relativem Insulinmangel","Fehlende Bauchspeicheldrüse","Zu viel Insulin"],a:1,e:"Typ 1 = absoluter Insulinmangel (Autoimmun), Typ 2 = Insulinresistenz, später oft nachlassende Insulinproduktion."},
+{q:"Welche Symptome sind typisch für erhöhten Blutzucker?",o:["Polyurie, Polydipsie, Müdigkeit","Herzrasen und Schwitzen","Husten und Fieber","Schüttelfrost"],a:0,e:"Vermehrtes Wasserlassen, starker Durst, Müdigkeit, schlecht heilende Wunden, Infektanfälligkeit."},
+{q:"Welcher Faktor begünstigt Typ 2 am stärksten?",o:["Untergewicht","Viel Bewegung","Bauchbetontes Übergewicht und Bewegungsmangel","Vegetarische Ernährung"],a:2,e:"Weitere Risiken: familiäre Veranlagung, Alter, Bluthochdruck, Fettstoffwechselstörung."},
+{q:"Welches Medikament ist ein orales Antidiabetikum der ersten Wahl?",o:["Ramipril","Furosemid","Marcumar","Metformin"],a:3,e:"Metformin senkt die Insulinresistenz. Später können weitere Antidiabetika oder Insulin nötig werden."}],
+open:{q:"Erklären Sie die Krankheitslehre des Diabetes mellitus Typ 2 (Definition, Ursachen, Symptome, Therapie) und grenzen Sie ihn kurz vom Typ 1 ab.",m:"• Definition: chronische Stoffwechselerkrankung mit dauerhaft erhöhtem Blutzucker.\n• Pathophysiologie Typ 2: Insulinresistenz der Körperzellen → Beta-Zellen produzieren zunächst mehr Insulin, später Erschöpfung → relativer, dann ggf. absoluter Insulinmangel.\n• Risikofaktoren: Adipositas, Bewegungsmangel, ungesunde Ernährung, Alter, Veranlagung, Bluthochdruck, Rauchen.\n• Symptome: Polyurie, Polydipsie, Müdigkeit, Infektanfälligkeit, Juckreiz, schlecht heilende Wunden; oft lange symptomlos.\n• Therapie: Lebensstil (Ernährung, Bewegung, Gewicht), orale Antidiabetika (z. B. Metformin), ggf. Insulin; Schulung; Risikofaktoren behandeln.\n• Typ 1: Autoimmun, absoluter Insulinmangel, meist jung, schneller Beginn, immer Insulinpflichtig."}},
+
+{n:5,t:"Komplikationen bei Diabetes & pflegerische Aspekte",
+mc:[
+{q:"Welche Zeichen sprechen für eine Hypoglykämie?",o:["Starker Durst und Azetongeruch","Zittern, Schwitzen, Heißhunger, Unruhe","Fieber und Husten","Gelbfärbung der Haut"],a:1,e:"Gegenregulation durch Adrenalin: Zittern, Schwitzen, Herzklopfen, Heißhunger. Später Verwirrtheit bis Bewusstlosigkeit."},
+{q:"Was tun Sie bei einer Hypoglykämie bei einer wachen, schluckfähigen Person?",o:["Insulin spritzen","Nichts, abwarten","Schnell wirksame Kohlenhydrate geben (z. B. Traubenzucker, Saft), danach BZ kontrollieren","Viel Wasser trinken lassen"],a:2,e:"Danach ggf. langsam wirksame Kohlenhydrate (Brot) geben, Arzt informieren, Ursache klären."},
+{q:"Welche Maßnahme ist zur Vorbeugung des diabetischen Fußsyndroms am wichtigsten?",o:["Barfuß laufen","Hornhaut mit dem Messer entfernen","Füße täglich waschen","Tägliche Fußinspektion, gut sitzende Schuhe, Verletzungen vermeiden"],a:3,e:"Wegen Neuropathie spüren Betroffene Verletzungen oft nicht. Nie barfuß, Zehenzwischenräume gut abtrocknen."},
+{q:"Eine Schädigung der kleinen Gefäße der Netzhaut heißt …",o:["Nephropathie","Retinopathie","Polyneuropathie","Makroangiopathie"],a:1,e:"Retinopathie (Augen), Nephropathie (Nieren), Neuropathie (Nerven) = Mikroangiopathie bzw. Folgeschäden; Makroangiopathie = Herzinfarkt, Schlaganfall, pAVK."}],
+open:{q:"Nennen Sie Komplikationen des Diabetes mellitus und beschreiben Sie, was pflegerisch zu berücksichtigen ist.",m:"• Akut: Hypoglykämie (Traubenzucker, BZ kontrollieren, Arzt), Hyperglykämie/hyperosmolares Koma (Flüssigkeit, Arzt/Notruf).\n• Chronisch Mikroangiopathie: Retinopathie (Sehkontrolle, Sturzgefahr), Nephropathie (Nierenwerte, Blutdruck), Neuropathie (Fußinspektion, Verletzungsgefahr, Schmerzen).\n• Makroangiopathie: Herzinfarkt, Schlaganfall, pAVK → Risikofaktoren senken, Blutdruck, Rauchstopp.\n• Diabetisches Fußsyndrom: tägliche Inspektion, Fußpflege, passendes Schuhwerk, Wundmanagement.\n• Infektionen: Hautpflege, Wundbeobachtung.\n• Pflegerisch: Beobachten, Dokumentieren, Beraten, Schulen, Arzt informieren."}},
+
+{n:6,t:"Labordiagnostik & Normwerte",
+mc:[
+{q:"Ab welchem Nüchternblutzucker (venös, Plasma) wird die Diagnose Diabetes gestellt?",o:["≥ 100 mg/dl","≥ 126 mg/dl (7,0 mmol/l)","≥ 90 mg/dl","≥ 160 mg/dl"],a:1,e:"Normal < 100 mg/dl, 100–125 = gestörte Nüchternglukose, ≥ 126 = Diabetes."},
+{q:"Was sagt der HbA1c-Wert aus?",o:["Den aktuellen Blutzucker","Den Insulinspiegel","Den durchschnittlichen Blutzucker der letzten 8–12 Wochen","Den Cholesterinspiegel"],a:2,e:"HbA1c = Langzeitwert. Ab 6,5 % Diabetes; Therapieziel individuell, bei Älteren oft ca. 7–8 %."},
+{q:"Beim oraler Glukosetoleranztest (oGTT) liegt ein Diabetes vor, wenn der 2-Stunden-Wert …",o:["< 100 mg/dl","< 140 mg/dl","≥ 140 mg/dl","≥ 200 mg/dl"],a:3,e:"Nach 75 g Glukose: ≥ 200 mg/dl = Diabetes, 140–199 = gestörte Glukosetoleranz."},
+{q:"Ab welchem Blutzucker liegt die Nierenschwelle (Glukose im Urin) etwa?",o:["ca. 180 mg/dl","ca. 80 mg/dl","ca. 100 mg/dl","ca. 60 mg/dl"],a:0,e:"Über der Nierenschwelle wird Zucker mit dem Urin ausgeschieden (Glukosurie) → Polyurie und Durst."}],
+open:{q:"Welche Laborwerte und Untersuchungen sind bei Diabetes mellitus wichtig? Geben Sie Normwerte bzw. Abweichungen an.",m:"• Nüchtern-BZ: normal < 100 mg/dl; ≥ 126 mg/dl = Diabetes.\n• Gelegenheits-BZ mit Symptomen: ≥ 200 mg/dl = Diabetes.\n• oGTT: 2-h-Wert ≥ 200 mg/dl = Diabetes.\n• HbA1c: normal < 5,7 %, ≥ 6,5 % = Diabetes; Verlaufskontrolle alle ca. 3 Monate.\n• Urin: Glukose (ab ca. 180 mg/dl), Ketone (Ketoazidose, v. a. Typ 1), Mikroalbumin (Nephropathie).\n• Nierenwerte (Kreatinin, GFR), Blutfette (LDL, Triglyzeride) zur Folgeschädenkontrolle.\n• Hypoglykämie: BZ < 70 mg/dl (je nach Quelle < 50)."}},
+
+{n:7,t:"Pflegerische Überwachung bei Diabetes",
+mc:[
+{q:"Wie bereiten Sie die Blutzuckermessung vor?",o:["Hände mit Seife und warmem Wasser waschen, gut abtrocknen","Finger mit Alkohol desinfizieren und sofort stechen","Finger gar nicht reinigen","Immer denselben Finger verwenden"],a:0,e:"Seitlich an der Fingerbeere stechen, Einstichstelle wechseln, ersten Tropfen nur bei Bedarf verwerfen, Handschuhe tragen."},
+{q:"Warum müssen Insulininjektionsstellen gewechselt werden?",o:["Wegen Schmerzen","Um Lipohypertrophien zu vermeiden und eine gleichmäßige Aufnahme zu gewährleisten","Weil es vorgeschrieben ist","Damit das Insulin schneller kalt wird"],a:1,e:"Gleichbleibendes Spritzen führt zu Verdickungen des Fettgewebes und unzuverlässiger Insulinaufnahme."},
+{q:"Wie wird Insulin richtig gelagert?",o:["Alles im Gefrierfach","Alles bei Raumtemperatur","Ungeöffnete Pens im Kühlschrank, angebrochener Pen bei Raumtemperatur (ca. 4 Wochen)","Alles in der Sonne"],a:2,e:"Nie einfrieren, nicht in die Sonne legen."},
+{q:"Wie oft sollten die Füße einer Person mit Diabetes kontrolliert werden?",o:["Einmal im Jahr","Einmal im Monat","Nur bei Beschwerden","Täglich"],a:3,e:"Tägliche Inspektion; zusätzlich regelmäßige ärztliche bzw. podologische Kontrolle."}],
+open:{q:"Welche pflegerischen Überwachungsmaßnahmen führen Sie bei einem Menschen mit Diabetes mellitus in der häuslichen Pflege durch?",m:"• Blutzuckermessung und Führen/Kontrolle des BZ-Tagebuchs.\n• Beobachten auf Hypo- und Hyperglykämiezeichen.\n• Medikamenten- und Insulingabe prüfen (Dosis, Zeitpunkt, Spritz-Ess-Abstand, Pen-Handhabung).\n• Injektionsstellen kontrollieren und wechseln.\n• Haut- und Fußkontrolle (Verletzungen, Druckstellen, Wunden).\n• Vitalzeichen, Gewicht, Ein-/Ausfuhr, Ernährung beobachten.\n• Augen, Sehkraft, Sturzrisiko im Blick behalten.\n• Dokumentation und Information an Arzt bei Auffälligkeiten.\n• Schulung und Anleitung zum Selbstmanagement."}},
+
+{n:8,t:"Diabetes & Lebensstil",
+mc:[
+{q:"Wie wirkt regelmäßige Bewegung bei Diabetes Typ 2?",o:["Sie erhöht die Insulinresistenz","Sie steigert die Insulinempfindlichkeit und senkt den Blutzucker","Sie hat keinen Effekt","Sie ist verboten"],a:1,e:"Empfohlen: mehrmals pro Woche moderate Bewegung, z. B. Spaziergänge, Gymnastik – an Fähigkeiten anpassen."},
+{q:"Welche Ernährung wird bei Diabetes Typ 2 empfohlen?",o:["Viel Zucker und Weißmehl","Strikt kohlenhydratfrei","Nur Diätprodukte für Diabetiker","Ballaststoffreich, Vollkorn, viel Gemüse, wenig Zucker, Gewichtsreduktion bei Übergewicht"],a:3,e:"Es gibt kein 'verbotenes' Lebensmittel, aber eine ausgewogene Ernährung mit Fokus auf Menge und Qualität der Kohlenhydrate."},
+{q:"Warum erhöht Rauchen das Risiko bei Diabetes?",o:["Es senkt den Blutdruck","Es verbessert die Durchblutung","Es schädigt die Gefäße und fördert Makroangiopathie","Es hat keinen Einfluss"],a:2,e:"Rauchen verschlechtert Durchblutung, verzögert Wundheilung und erhöht Herzinfarkt-/Schlaganfallrisiko."},
+{q:"Welche Maßnahme fördert das Selbstmanagement am besten?",o:["Alles für den Patienten übernehmen","Diabetesschulung und individuelle Beratung","Nur schriftliche Zettel","Nichts erklären"],a:1,e:"Ziel der Pflege: Selbstständigkeit fördern (Ressourcenorientierung, Edukation)."}],
+open:{q:"Herr K. (72 J., BMI 33, bewegt sich kaum, isst gern Süßes, Typ-2-Diabetes). Erklären Sie die Zusammenhänge zwischen Erkrankung und Lebensstil und leiten Sie Beratungsinhalte ab.",m:"• Zusammenhang: Übergewicht (v. a. Bauchfett) und Bewegungsmangel → Insulinresistenz → höherer Blutzucker; viel Zucker belastet den Stoffwechsel.\n• Beratung Ernährung: Zucker reduzieren, Vollkorn, Gemüse, regelmäßige Mahlzeiten, kleinere Portionen; Ernährungsberatung.\n• Beratung Bewegung: kleine Schritte, tägliche Spaziergänge, altersgerechte Gymnastik, Sturzprophylaxe beachten.\n• Gewichtsreduktion realistisch planen.\n• Rauchen/Alkohol ansprechen, Medikamente regelmäßig nehmen.\n• Vorgehen: Ressourcen und Wünsche erfragen, gemeinsam Ziele festlegen, Motivation stärken, Angehörige einbeziehen, Schulungsangebote nennen."}},
+
+{n:9,t:"Einsamkeit",
+mc:[
+{q:"Einsamkeit bedeutet …",o:["Immer allein zu wohnen","Das subjektive Gefühl, dass soziale Kontakte nicht ausreichen","Sich freiwillig zurückzuziehen","Ein Pflegegrad"],a:1,e:"Alleinsein ist ein objektiver Zustand, Einsamkeit ein subjektives Gefühl."},
+{q:"Welche Ursache für Einsamkeit im Alter ist typisch?",o:["Zu viele Besucher","Tod des Partners, Mobilitätseinschränkung, Wegzug von Freunden","Hohe Rente","Viel Hobby"],a:1,e:"Weitere Gründe: Krankheit, Hör-/Sehverlust, Armut, fehlende Mobilität."},
+{q:"Welche Folge kann anhaltende Einsamkeit haben?",o:["Weniger Stress","Bessere Gesundheit","Depression, Rückzug, erhöhtes Krankheits- und Sterberisiko","Weniger Schlafprobleme"],a:2,e:"Auch Vernachlässigung der Selbstpflege, Ernährung und Medikamenteneinnahme."},
+{q:"Welche Intervention kann Einsamkeit verringern?",o:["Nur Fernsehen empfehlen","Kontakte vermeiden","Besuche absagen","Besuchsdienst, Tagespflege, Seniorentreff, Telefonkette, Biografiearbeit"],a:3,e:"Ziel: soziale Teilhabe fördern, Ressourcen und Interessen einbeziehen."}],
+open:{q:"Frau T. (84 J., Witwe, kaum noch mobil) wirkt zunehmend traurig und zieht sich zurück. Identifizieren Sie mögliche Ursachen der Einsamkeit, benennen Sie Folgen und planen Sie pflegerische Interventionen.",m:"• Ursachen: Verwitwung, eingeschränkte Mobilität, wenige Kontakte, Verlust von Freunden, evtl. Hör-/Sehprobleme, Scham.\n• Folgen: Traurigkeit/Depression, Rückzug, Appetitlosigkeit, Vernachlässigung der Selbstpflege, kognitiver Abbau, Sturz-/Krankheitsrisiko.\n• Interventionen: Gespräch führen, Zeit schenken, Biografiearbeit, Besuchsdienst/Ehrenamtliche, Tagespflege, Seniorentreffs, Telefonkette, Angehörige einbinden, Hilfsmittel (Hörgerät, Rollator), ggf. Haustier, Arzt bei Depression informieren.\n• Ressourcen nutzen (Hobbys, Glauben, Nachbarn) und Ziele gemeinsam mit Frau T. festlegen."}},
+
+{n:10,t:"Empathie, Kommunikation & Deutung von Aussagen",
+mc:[
+{q:"Empathie bedeutet …",o:["Mitleid empfinden","Dem anderen Ratschläge geben","Sich in die Gefühle und die Sichtweise des anderen einfühlen und dies zeigen","Die eigene Meinung durchsetzen"],a:2,e:"Empathie ≠ Mitleid und ≠ Sympathie."},
+{q:"Was gehört zum aktiven Zuhören?",o:["Paraphrasieren, Nachfragen, Blickkontakt, Pausen aushalten","Unterbrechen","Sofort bewerten","Auf das Handy schauen"],a:0,e:"Paraphrasieren = Gesagtes in eigenen Worten wiedergeben."},
+{q:"Welche vier Seiten hat eine Nachricht nach Schulz von Thun?",o:["Ort, Zeit, Anlass, Ziel","Sachinhalt, Selbstoffenbarung, Beziehung, Appell","Inhalt, Form, Ton, Mimik","Frage, Antwort, Bewertung, Lösung"],a:1,e:"Beispiel: 'Ich habe niemanden mehr, der mich besucht.' → Selbstoffenbarung: Ich bin einsam; Appell: Bitte bleib / hör mir zu."},
+{q:"Was ist ein Kernprinzip der Validation nach Naomi Feil?",o:["Verwirrte Menschen ständig korrigieren","Gefühle und Erleben des Menschen ernst nehmen und wertschätzen","Realitätsorientierung erzwingen","Ablenken mit Fernsehen"],a:1,e:"Validation: wertschätzende Haltung, besonders bei Menschen mit Demenz."}],
+open:{q:"Ein pflegebedürftiger Mann sagt: „Ach, ich bin sowieso nur noch eine Last für alle.“ Deuten Sie die Aussage (Vier-Seiten-Modell) und beschreiben Sie eine angemessene Reaktion.",m:"• Sachebene: Er sieht sich als Belastung.\n• Selbstoffenbarung: Er fühlt sich wertlos, traurig, schuldig; möglicher Hinweis auf Depression/Suizidgedanken.\n• Beziehungsebene: Er zweifelt an seiner Rolle/Wertschätzung durch andere.\n• Appell: 'Bitte nimm mich ernst/sag mir, dass ich wichtig bin.'\n• Reaktion: Zeit nehmen, aktiv zuhören, Gefühle spiegeln ('Sie fühlen sich als Last, das belastet Sie.'), nachfragen, nicht abwiegeln; Ressourcen und Bedeutung betonen; bei Hinweisen auf Suizidalität Arzt/Team informieren; Angehörige einbeziehen."}},
+
+{n:11,t:"Chronische Wunden & Beratung",
+mc:[
+{q:"Wann spricht man (nach gängiger Definition) von einer chronischen Wunde?",o:["Nach 1 Tag","Wenn sie trotz fachgerechter Therapie nach ca. 8 Wochen nicht abgeheilt ist","Sofort bei jeder Verletzung","Wenn sie blutet"],a:1,e:"Je nach Quelle 4–12 Wochen; häufig wird 8 Wochen genannt. Bitte mit eurem Skript abgleichen."},
+{q:"Was ist die Hauptursache des Ulcus cruris venosum?",o:["Arterielle Verschlusskrankheit","Chronisch venöse Insuffizienz","Neuropathie","Dauerdruck"],a:1,e:"Behandlung: Kompressionstherapie, Beine hochlagern, Bewegung (Sprunggelenkspumpe)."},
+{q:"Was gehört zur Beratung bei Ulcus cruris venosum?",o:["Beine tief hängen lassen","Kompression meiden","Konsequent Kompressionsverband/-strümpfe tragen, Bewegung, Beine hochlagern","Nur sitzen"],a:2,e:"Zusätzlich: Hautpflege, Gewichtsreduktion, Wundverband nicht selbst wechseln."},
+{q:"Das diabetische Fußsyndrom entsteht vor allem durch …",o:["Zu viel Bewegung","Neuropathie und/oder periphere Durchblutungsstörungen (pAVK)","Zu enge Brille","Trockene Luft"],a:1,e:"Fehlende Schmerzempfindung + schlechte Durchblutung → kleine Verletzungen werden zu Wunden."}],
+open:{q:"Frau S. (68 J.) hat ein Ulcus cruris venosum, trägt ihre Kompressionsstrümpfe selten und raucht. Erkennen Sie Wissensdefizite und beschreiben Sie Ihre Beratung.",m:"• Wissensdefizite: Bedeutung der Kompression nicht verstanden, Wundheilungsfaktoren (Rauchen, Bewegung, Ernährung) unbekannt, evtl. Handhabungsprobleme.\n• Beratung: Warum Kompression? (Venenrückfluss, Ödemreduktion) → richtiges An- und Ausziehen zeigen, Hilfsmittel (Anziehhilfen).\n• Bewegung fördern, Beine hochlagern.\n• Rauchstopp: schlechtere Durchblutung/Wundheilung, Unterstützungsangebote.\n• Ernährung: Eiweiß, Vitamine, Flüssigkeit.\n• Hautpflege, Verbandwechsel durch Fachkraft, Anzeichen für Infektion erkennen und melden.\n• Gesprächsführung: Verständnis, Motivation, Teach-back (Patient wiederholt), Angehörige einbeziehen."}},
+
+{n:12,t:"Wundheilungsfaktoren",
+mc:[
+{q:"Wie lautet die richtige Reihenfolge der Wundheilungsphasen?",o:["Granulation – Exsudation – Epithelisierung","Epithelisierung – Granulation – Exsudation","Exsudation/Reinigung – Granulation – Epithelisierung","Exsudation – Epithelisierung – Granulation"],a:2,e:"Reinigung → Aufbau (Granulation) → Epithelisierung/Regeneration."},
+{q:"Welcher Faktor verzögert die Wundheilung?",o:["Gute Durchblutung","Ausreichend Eiweiß","Feuchtes Wundmilieu","Schlecht eingestellter Diabetes, Rauchen, Mangelernährung"],a:3,e:"Weitere: Infektion, Durchblutungsstörungen, Kortison, hohes Alter, Stress, mangelnde Adhärenz."},
+{q:"Welche Nährstoffe unterstützen die Wundheilung besonders?",o:["Eiweiß, Vitamin C, Zink und ausreichend Flüssigkeit","Nur Zucker","Nur Fett","Alkohol"],a:0,e:"Mangelernährung (Eiweiß) verzögert die Heilung deutlich."},
+{q:"Welches Wundmilieu ist optimal?",o:["Trocken","Feucht, warm und keimarm","Austrocknend","Dauernd offen an der Luft"],a:1,e:"Feuchte Wundbehandlung begünstigt Zellmigration und Gewebeaufbau."}],
+open:{q:"Nennen Sie systemische und lokale Faktoren, die die Wundheilung beeinflussen.",m:"• Lokal: Durchblutung, Infektion, Nekrosen/Beläge, Wundmilieu (feucht), Druck/Reibung, Wundgröße und -tiefe, Verbandmaterial.\n• Systemisch: Alter, Ernährungszustand (Eiweiß, Vitamine, Zink), Flüssigkeit, Grunderkrankungen (Diabetes, pAVK, Venenleiden), Rauchen, Medikamente (Kortison, Immunsuppressiva), Stress, Bewegung, Immunstatus.\n• Psychosozial/Verhalten: Adhärenz, Wissen, Selbstmanagement, soziale Unterstützung."}}
+];
+
+/* ===== LOGIK ===== */
+const app=document.getElementById('app');
+const KL_NAMES=["Klausur 1","Klausur 2","Klausur 3","Klausur 4"];
+let run=null;
+
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function el(h){const d=document.createElement('div');d.innerHTML=h;return d}
+function store(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem(k));localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}}
+
+function mcItem(t,i){const m=T[t].mc[i];return {type:'mc',topic:T[t].t,q:m.q,o:m.o,a:m.a,e:m.e}}
+function openItem(t){const o=T[t].open;return {type:'open',topic:T[t].t,q:o.q,m:o.m}}
+
+function buildKlausur(k){
+  const items=T.map((_,t)=>mcItem(t,k));
+  const opens=[k*3,k*3+1,k*3+2].map(openItem);
+  return items.concat(opens);
+}
+function buildRandom(){
+  const items=T.map((_,t)=>mcItem(t,Math.floor(Math.random()*4)));
+  const idx=shuffle([...Array(12).keys()]).slice(0,3);
+  return shuffle(items).concat(idx.map(openItem));
+}
+function buildTopic(t){
+  return [0,1,2,3].map(i=>mcItem(t,i)).concat([openItem(t)]);
+}
+
+function start(title,items,key){
+  run={title,key,items:items.map(it=>{
+    if(it.type==='mc'){const opts=shuffle(it.o.map((x,i)=>({x,ok:i===it.a})));return {...it,opts}}
+    return it}),i:0,score:0,wrong:[],max:items.length};
+  showQ();
+}
+
+function home(){
+  run=null;
+  let h='<h1>📝 Klausurtrainer</h1><p class="sub">LF 7B – Pflege, Gesundheitsförderung und Prävention in der häuslichen Pflege</p>';
+  h+='<h2>Klausuren</h2><div class="grid">';
+  KL_NAMES.forEach((n,k)=>{
+    const b=store('best_k'+k);
+    h+=`<button class="tile" data-k="${k}"><b>${n}</b><small>12 Multiple-Choice + 3 offene Fragen${b!=null?' · Bestwert '+b+' %':''}</small></button>`;
+  });
+  h+=`<button class="tile" data-r="1"><b>🎲 Zufalls-Klausur</b><small>Immer neu gemischt</small></button></div>`;
+  h+='<h2>Nach Thema üben</h2><div class="grid">';
+  T.forEach((t,i)=>{h+=`<button class="tile" data-t="${i}"><b>${t.n}. ${t.t}</b><small>4 MC + 1 offene Frage</small></button>`});
+  h+='</div><p class="note">Erstellt anhand der Checkliste zur Klausurvorbereitung. Die Inhalte sind eine Lernhilfe – bitte mit eurem Unterrichtsmaterial und Skript abgleichen (Grenzwerte, Definitionen und Leistungen können je nach Quelle und Jahr abweichen).</p>';
+  app.innerHTML=h;
+  app.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{const k=+b.dataset.k;start(KL_NAMES[k],buildKlausur(k),'best_k'+k)});
+  app.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>start('Zufalls-Klausur',buildRandom(),null));
+  app.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{const t=+b.dataset.t;start(T[t].n+'. '+T[t].t,buildTopic(t),null)});
+}
+
+function showQ(){
+  const it=run.items[run.i];
+  const pct=Math.round(run.i/run.max*100);
+  let h=`<p><button class="btn sec" id="back">← Abbrechen</button></p><h1>${run.title}</h1>
+  <div class="bar"><i style="width:${pct}%"></i></div>
+  <div class="card"><span class="tag">Frage ${run.i+1} / ${run.max} · ${it.topic}</span><div style="font-weight:600">${it.q}</div><div id="body"></div></div>`;
+  app.innerHTML=h;
+  const backBtn=document.getElementById('back');
+  backBtn.onclick=()=>{
+    if(backBtn.dataset.sure){home();return}
+    backBtn.dataset.sure='1';backBtn.textContent='Wirklich abbrechen? Nochmal tippen';
+    setTimeout(()=>{if(backBtn.isConnected){delete backBtn.dataset.sure;backBtn.textContent='← Abbrechen'}},3000);
+  };
+  const body=document.getElementById('body');
+  if(it.type==='mc'){
+    it.opts.forEach((o,i)=>{
+      const b=document.createElement('button');b.className='opt';b.textContent=o.x;
+      b.onclick=()=>answerMC(it,i,body);
+      body.appendChild(b);
+    });
+  }else{
+    body.innerHTML='<p class="sub">Beantworte die Frage in Stichpunkten, dann vergleiche mit der Musterantwort.</p><textarea placeholder="Deine Antwort …"></textarea><div class="row"><button class="btn" id="show">Musterantwort anzeigen</button></div>';
+    document.getElementById('show').onclick=()=>{
+      body.innerHTML='<div class="expl"><b>Musterantwort</b>\n'+it.m+'</div><p>Wie gut war deine Antwort?</p><div class="row"><button class="btn" data-s="1">✅ Gewusst</button><button class="btn sec" data-s="0.5">🟡 Teilweise</button><button class="btn sec" data-s="0">❌ Nicht gewusst</button></div>';
+      body.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{
+        const s=+b.dataset.s;run.score+=s;if(s<1)run.wrong.push(it.topic);next();
+      });
+    };
+  }
+}
+
+function answerMC(it,i,body){
+  const btns=body.querySelectorAll('.opt');
+  btns.forEach((b,j)=>{b.disabled=true;if(it.opts[j].ok)b.classList.add('ok')});
+  if(it.opts[i].ok){run.score++}else{btns[i].classList.add('bad');run.wrong.push(it.topic)}
+  const e=el(`<div class="expl">${it.opts[i].ok?'✅ Richtig!':'❌ Leider falsch.'} ${it.e}</div><div class="row"><button class="btn" id="nx">${run.i+1<run.max?'Weiter':'Auswertung'}</button></div>`);
+  body.appendChild(e);
+  document.getElementById('nx').onclick=next;
+}
+
+function next(){run.i++;if(run.i<run.max)showQ();else result()}
+
+function result(){
+  const p=Math.round(run.score/run.max*100);
+  let g=p>=92?1:p>=81?2:p>=67?3:p>=50?4:p>=30?5:6;
+  if(run.key){const b=store(run.key);if(b==null||p>b)store(run.key,p)}
+  const uniq=[...new Set(run.wrong)];
+  app.innerHTML=`<h1>Auswertung: ${run.title}</h1>
+  <div class="card"><div class="big">${p} %</div><p>${run.score} von ${run.max} Punkten · ungefähre Note: <b>${g}</b></p>
+  ${uniq.length?'<p><b>Hier solltest du nochmal nachlesen:</b></p><ul>'+uniq.map(x=>'<li>'+x+'</li>').join('')+'</ul>':'<p>🎉 Alles richtig, stark!</p>'}
+  <div class="row"><button class="btn" id="again">Nochmal</button><button class="btn sec" id="home">Zur Übersicht</button></div></div>
+  <p class="note">Die Note ist nur eine grobe Orientierung (Schlüssel: ab 50 % = ausreichend).</p>`;
+  document.getElementById('home').onclick=home;
+  document.getElementById('again').onclick=()=>{
+    const t=run.title;
+    if(/^Klausur (\d)$/.test(t)){const k=+t.slice(-1)-1;start(t,buildKlausur(k),'best_k'+k)}
+    else if(t==='Zufalls-Klausur')start(t,buildRandom(),null);
+    else{const n=parseInt(t)-1;start(t,buildTopic(n),null)}
+  };
+}
+home();
+</script>
+</body>
+</html>
